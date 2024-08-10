@@ -1,5 +1,6 @@
 package com.matheus.ecommerce.entities.order;
 
+import com.matheus.ecommerce.entities.payment.Payment;
 import com.matheus.ecommerce.entities.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Entity
 @Table(name = "orders")
@@ -27,4 +29,7 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "client_id")
     private User client;
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Payment payment;
 }
