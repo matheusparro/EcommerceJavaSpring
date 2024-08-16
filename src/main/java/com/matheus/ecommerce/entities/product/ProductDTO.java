@@ -2,9 +2,7 @@ package com.matheus.ecommerce.entities.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @AllArgsConstructor
 @Getter
 public class ProductDTO {

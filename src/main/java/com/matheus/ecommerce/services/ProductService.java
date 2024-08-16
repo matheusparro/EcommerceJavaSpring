@@ -3,13 +3,17 @@ package com.matheus.ecommerce.services;
 import com.matheus.ecommerce.entities.product.Product;
 import com.matheus.ecommerce.entities.product.ProductDTO;
 import com.matheus.ecommerce.repositories.ProductRepository;
+import com.matheus.ecommerce.services.exceptions.DatabaseException;
+import com.matheus.ecommerce.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,8 +24,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductDTO findById(Long id) {
-        Optional<Product> obj = repository.findById(id);
-        Product productFound = obj.get();
+        Product productFound= repository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Entity not found"));
+
         return new ProductDTO(productFound);
     }
 
@@ -40,14 +44,25 @@ public class ProductService {
 
     @Transactional
     public ProductDTO update(Long id, ProductDTO dto) {
-        Product entity = repository.getReferenceById(id);
-        copyDtoToEntity(dto, entity);
-        entity = repository.save(entity);
-        return new ProductDTO(entity);
+        try {
+            Product entity = repository.getReferenceById(id);
+            copyDtoToEntity(dto, entity);
+            entity = repository.save(entity);
+            return new ProductDTO(entity);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException("Entity not found");
+        }
     }
-    @Transactional
+    @Transactional(propagation = Propagation.SUPPORTS)
     public void delete(Long id) {
-        repository.deleteById(id);
+        try {
+            if (!repository.existsById(id)) {
+                throw new ResourceNotFoundException("Entity not found");
+            }
+            repository.deleteById(id);
+        } catch (DataIntegrityViolationException e){
+            throw new DatabaseException("Integrity violation");
+        }
     }
 
     private void copyDtoToEntity(ProductDTO dto, Product entity) {
